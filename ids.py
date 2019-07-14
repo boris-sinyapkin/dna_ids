@@ -3,10 +3,11 @@ import csv
 import json
 import regex
 
+from Bio           import Align
 from Bio.Seq       import Seq
 from Bio.SeqRecord import SeqRecord
 
-from sys import stderr
+from sys           import stderr
 
 
 class kdd_dataset:
@@ -106,8 +107,15 @@ class kdd_dataset:
         print("")
         return retlist
 
-            
-
+    # This function search normal sequence in list of normal activities             
+    def get_normal_sequence(aligner : Align.PairwiseAligner, normal_act : list) -> dict:
+        
+        raise NotImplementedError
+        
+        return {
+            "normal_seq" : SeqRecord(),
+            "threshold"  : float()
+        }
 
         
 
