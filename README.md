@@ -12,7 +12,7 @@ These instructions will get you a copy of the project up and running on your loc
 git clone https://github.com/Dr-Livsey/dna_ids.git
 cd dna_ids
 ./install_packages.sh
-python src.py
+python frontend.py -h
 ```
 
 ## Built With
