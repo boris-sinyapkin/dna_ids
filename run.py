@@ -28,7 +28,7 @@ def run(dataset_path : Path, codetable_path : Path, normal_path : Path):
         # Obtain records from file
         normal_act = [seq_record for seq_record in SeqIO.parse(normal_path, "fasta")]
 
-    raise "List of normal activities is empty." if normal_act == [] else {}
+    assert(normal_act != [])
 
     # By default, a global pairwise alignment is performed
     aligner = Align.PairwiseAligner()
@@ -38,6 +38,8 @@ def run(dataset_path : Path, codetable_path : Path, normal_path : Path):
     aligner.mismatch         = -4.0
     aligner.open_gap_score   = -2.0
     aligner.extend_gap_score = -0.5
+
+    print(aligner.score(normal_act[0].seq, normal_act[2].seq))
 
         
 
