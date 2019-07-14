@@ -1,10 +1,16 @@
 
 import argparse
 
+
 from run import run
+from sys import platform
 from pathlib import Path
 
 def main():
+
+    # Temporary
+    assert ('linux' in platform)
+
     parser = argparse.ArgumentParser(
         description="DNA Intrusion Detection System")
 
