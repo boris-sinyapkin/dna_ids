@@ -3,6 +3,12 @@ import csv
 import json
 import regex
 
+from Bio.Seq       import Seq
+from Bio.SeqRecord import SeqRecord
+
+from sys import stderr
+
+
 class kdd_dataset:
 
     _path = ""
@@ -27,7 +33,7 @@ class kdd_dataset:
             self._codetable = json.load(json_codetable)
 
     # Encoding KDD record into DNA sequence
-    def encode_kdd_record(self, index : int) -> dict:
+    def encode_kdd_record(self, index : int) -> SeqRecord:
         if not self._codetable:
             raise Exception("Codetable is empty")
         else:
@@ -54,19 +60,58 @@ class kdd_dataset:
                             payload += self._codetable["dot"]
 
                 else:
-                    # hardcoded value
-                    ident   = self._codetable["prefixes"][f"{idx}"][0]
-                    prefix  = self._codetable["prefixes"][f"{idx}"][1]
+                    try:
+                        # hardcoded value
+                        ident = self._codetable["prefixes"][f"{idx}"][0]
+                        prefix = self._codetable["prefixes"][f"{idx}"][1]
 
-                    payload += prefix + self._codetable["hardcoded"][ident][item]     
+                        payload += prefix + self._codetable["hardcoded"][ident][item]
+                    except KeyError:
+                        print("Key Error: \n\
+                               \r- idx    = %d \n\
+                               \r- ident  = \'%s\' \n\
+                               \r- item   = \'%s\'" % (idx, ident, item), file=stderr)
 
             label = raw_record[41]
 
             for i in range(42, len(raw_record)):
                 extra.append(raw_record[i])
                 
-        return {
-                "payload" : payload,
-                "label"   : label,
-                "extra"   : extra
-        }
+        return SeqRecord \
+        (
+            Seq(payload), 
+            id=str(index),
+            name=label, 
+            features=extra, 
+            description=f"({index}) KDD record encoded into DNA. [{label}]"
+        )
+
+    # Search all sequences, which applies function in parameter list.
+    def findall(self, value : str, func) -> list:
+        retlist = []
+        dataset_len = len(self._dataset)
+
+        print("Processing sequences: ")
+        print("                      ]\r[", end='', flush=True)
+
+        for index in range(0, dataset_len):
+            
+            seq_rec = self.encode_kdd_record(index)
+
+            if func(value, seq_rec):
+                retlist.append(seq_rec)
+
+            print("#", end='', flush=True) if index % int(dataset_len/20) == 0 else {}
+
+        print("")
+        return retlist
+
+            
+
+
+        
+
+
+
+
+
