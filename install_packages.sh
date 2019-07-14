@@ -12,6 +12,10 @@ unzip NSL-KDD.zip -d NSL-KDD/
 rm NSL-KDD.zip
 
 echo "Install python modules"
+
 pip install regex
+
+#Using to operation with DNA sequences
 pip install biopython
+pip install biopython --upgrade
 
