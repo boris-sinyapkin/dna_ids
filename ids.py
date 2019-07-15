@@ -3,7 +3,10 @@ import csv
 import json
 import regex
 
+from pathlib import Path
+
 from Bio           import Align
+from Bio           import SeqIO
 from Bio.Seq       import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -107,17 +110,64 @@ class kdd_dataset:
         print("")
         return retlist
 
-    # This function search normal sequence in list of normal activities             
-    def get_normal_sequence(aligner : Align.PairwiseAligner, normal_act : list) -> dict:
-        
-        raise NotImplementedError
-        
-        return {
-            "normal_seq" : SeqRecord(),
-            "threshold"  : float()
-        }
+# This function search normal sequence in list of normal activities             
+def get_normal_sequence(aligner : Align.PairwiseAligner, normal_act : list, dump_matrix_in_csv=False) -> dict:
+    
+    if dump_matrix_in_csv:
+        csv_file   = open(Path("matrix.csv"), 'w')
+        csv_writer = csv.writer(csv_file, dialect='excel')
 
-        
+    # The selection criterion is the minimum of align scores sum
+    sum_info = {
+        "sum_list"  : [],
+        "tresholds" : []
+    }
+
+    print("Processing normal sequences: ")
+
+    # For each normal seq
+    for seq_rec in normal_act:       
+        # Calculate alignment with each normal sequence
+        align_info = calculate_vector_alignment(aligner, seq_rec, normal_act)
+
+        # Dump align list in csv file
+        csv_writer.writerow(align_info["score_list"] + \
+                            ["treshold", align_info["treshold"]] + \
+                            ["sum",      align_info["sum"]]) if dump_matrix_in_csv else {}
+
+        sum_info["sum_list"].append(align_info["sum"])
+        sum_info["tresholds"].append(align_info["treshold"])
+        print("")
+
+    min_idx = sum_info["sum_list"].index(min(sum_info["sum_list"]))
+    
+    csv_file.close() if dump_matrix_in_csv else {}
+    return {
+        "seq_rec"  : normal_act[min_idx],
+        "treshold" : sum_info["tresholds"][min_idx]
+    }
+
+# Align 'seq_rec' with each sequence in 'seq_vector'
+def calculate_vector_alignment(aligner : Align.PairwiseAligner, seq_rec : SeqRecord, seq_vector : list) -> dict:
+
+    # Only for printing loading line
+    print(f"{' '*(20 + 10)}]", end='', flush=True)
+    print(f"\r{seq_rec.id}\t[", end='', flush=True)
+
+    score_list = []
+    for index, list_item in enumerate(seq_vector):
+            score_list.append(aligner.score(seq_rec.seq, list_item.seq))
+            # Only for printing loading line
+            print("#", end='', flush=True) if index % int(len(seq_vector)/20) == 0 else {}
+
+    score_sum = sum(score_list)
+    treshold  = score_sum / len(score_list)
+
+    return {
+        "score_list" : score_list,
+        "treshold"   : treshold,
+        "sum"        : score_sum
+    }
 
 
 
