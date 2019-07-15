@@ -110,45 +110,65 @@ class kdd_dataset:
         print("")
         return retlist
 
+class AlignInfo:
+
+    _info = {}
+
+    def __init__(self, align_info : dict):
+        self._info = align_info
+
+    def to_csv(self) -> list:
+        csv_line = [self._info["seq"].id]
+        csv_line += [item["score"] for item in self._info["score_list"]]
+        csv_line += [self._info["treshold"], self._info["sum"]]
+
+        return csv_line
+
+    def get_sum(self):
+        return self._info["sum"]
+    def get_seqrec(self):
+        return self._info["seq"]
+    def get_treshold(self):
+        return self._info["treshold"]
+
+        
+
 # This function search normal sequence in list of normal activities             
-def get_normal_sequence(aligner : Align.PairwiseAligner, normal_act : list, dump_matrix_in_csv=False) -> dict:
+def get_normal_sequence(aligner : Align.PairwiseAligner, normal_act : list) -> dict:
     
-    if dump_matrix_in_csv:
-        csv_file   = open(Path("matrix.csv"), 'w')
-        csv_writer = csv.writer(csv_file, dialect='excel')
-
-    # The selection criterion is the minimum of align scores sum
-    sum_info = {
-        "sum_list"  : [],
-        "tresholds" : []
-    }
-
     print("Processing normal sequences: ")
 
-    # For each normal seq
-    for seq_rec in normal_act:       
+    with open(Path("matrix.csv"), 'w') as csv_file:
+
+        csv_writer = csv.writer(csv_file, dialect='excel')
+
+        # Create csv headers
+        csv_writer.writerow(["id"] + [seq.id for seq in normal_act] + ["treshold", "sum"])
+
+        # Ideal sequence attributes
+        seq      = None 
+        treshold = None
+
+        max_sum = 0
+        
         # Calculate alignment with each normal sequence
-        align_info = calculate_vector_alignment(aligner, seq_rec, normal_act)
+        for seq_rec in normal_act:       
 
-        # Dump align list in csv file
-        csv_writer.writerow(align_info["score_list"] + \
-                            ["treshold", align_info["treshold"]] + \
-                            ["sum",      align_info["sum"]]) if dump_matrix_in_csv else {}
+            align_info = calculate_vector_alignment(aligner, seq_rec, normal_act)
+            # Dump align list in csv file
+            csv_writer.writerow(align_info.to_csv())
 
-        sum_info["sum_list"].append(align_info["sum"])
-        sum_info["tresholds"].append(align_info["treshold"])
-        print("")
+            if align_info.get_sum() > max_sum:
+                seq      = align_info.get_seqrec()
+                treshold = align_info.get_treshold()   
 
-    min_idx = sum_info["sum_list"].index(min(sum_info["sum_list"]))
-    
-    csv_file.close() if dump_matrix_in_csv else {}
     return {
-        "seq_rec"  : normal_act[min_idx],
-        "treshold" : sum_info["tresholds"][min_idx]
+        "seq"      : seq,
+        "treshold" : treshold
     }
 
 # Align 'seq_rec' with each sequence in 'seq_vector'
-def calculate_vector_alignment(aligner : Align.PairwiseAligner, seq_rec : SeqRecord, seq_vector : list) -> dict:
+def calculate_vector_alignment(aligner : Align.PairwiseAligner, seq_rec : SeqRecord, seq_vector : list) -> AlignInfo:
 
     # Only for printing loading line
     print(f"{' '*(20 + 10)}]", end='', flush=True)
@@ -156,18 +176,26 @@ def calculate_vector_alignment(aligner : Align.PairwiseAligner, seq_rec : SeqRec
 
     score_list = []
     for index, list_item in enumerate(seq_vector):
-            score_list.append(aligner.score(seq_rec.seq, list_item.seq))
+            score_list.append({
+                "id"    : list_item.id,
+                "score" : aligner.score(seq_rec.seq, list_item.seq)
+            })
             # Only for printing loading line
             print("#", end='', flush=True) if index % int(len(seq_vector)/20) == 0 else {}
 
-    score_sum = sum(score_list)
+    print("")
+
+    # Calculate sum of align scores
+    score_sum = sum(item["score"] for item in score_list)
+
     treshold  = score_sum / len(score_list)
 
-    return {
+    return AlignInfo({
+        "seq"        : seq_rec,
         "score_list" : score_list,
         "treshold"   : treshold,
         "sum"        : score_sum
-    }
+    })
 
 
 

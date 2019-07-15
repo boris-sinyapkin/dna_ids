@@ -36,8 +36,7 @@ def run(dataset_path : Path, codetable_path : Path, normal_path : Path):
     aligner.open_gap_score   = -2.0
     aligner.extend_gap_score = -0.5
 
-    ids.get_normal_sequence(aligner, normal_act, dump_matrix_in_csv=True)
-
+    ideal_seq = ids.get_normal_sequence(aligner, normal_act)
         
 
 
