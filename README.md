@@ -1,4 +1,4 @@
-# DNA Intrusion Detection System
+# DNA-based Intrusion Detection System
 
 The main idea of this project is using bioinformatic features in detecting masquerading attacks. 
 
