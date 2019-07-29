@@ -1,9 +1,8 @@
 
 import argparse
 
-
-from run import run
-from sys import platform
+from run     import run
+from sys     import platform
 from pathlib import Path
 
 def main():
