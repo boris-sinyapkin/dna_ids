@@ -15,6 +15,11 @@ cd dna_ids
 python frontend.py -h
 ```
 
+### TODO
+- [ ] Implement interfaces for Dataset and IDS classes
+- [ ] Use "Builder" pattern when implementing the main IDS algo
+- [ ] Create separate object for matrix.csv records
+
 ## Built With
 
 * [Biopython](http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc32) - Main python module to work with DNA sequences
