@@ -17,6 +17,7 @@ python frontend.py -h
 
 ### TODO
 - [ ] Implement interfaces for Dataset and IDS classes
+- [ ] Implement multithreaded searching of the best signature
 - [ ] Use "Builder" pattern when implementing the main IDS algo
 - [ ] Create separate object for matrix.csv records
 
