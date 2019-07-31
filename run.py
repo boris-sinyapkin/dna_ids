@@ -1,21 +1,21 @@
-import csv
 import ids
 
+from kdd         import JSON_Codetable, KDD_Dataset 
 from pathlib     import Path
-from kdd_dataset import KDD_Dataset
-
 
 def run(dataset_path: Path, codetable_path: Path, normal_path: Path):
 
-    train_dataset = KDD_Dataset(dataset_path, codetable_path)
+    # Prepare dataset and codetable
+    codetable     = JSON_Codetable(codetable_path) 
+    train_dataset = KDD_Dataset(dataset_path)
 
     normal_act = []
 
     # Prepare file with normal activities (if not exist)
-    if normal_path.exists() == False:
+    if normal_path == None or normal_path.exists() == False:
         # Select normal activities from dataset
-        normal_act = train_dataset.findall("normal",
-                                     lambda val, seq_rec: val == seq_rec.name)
+        normal_act = train_dataset.get_normal_seq(codetable)
+
         # Put it in FASTA fromat file
         ids.SeqIO.write(normal_act, "normal.faa", "fasta")
     else:
