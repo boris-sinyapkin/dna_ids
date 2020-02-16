@@ -3,7 +3,7 @@ import csv
 import json
 import regex
 
-
+from pandas                  import DataFrame
 from numpy                   import array as numpy_array
 from tqdm                    import tqdm
 from pathlib                 import Path
@@ -14,6 +14,57 @@ from Bio.Seq       import Seq
 from Bio.SeqRecord import SeqRecord
 
 from os            import path
+
+class Metrics:
+    false_pos, false_negative = 0, 0
+    true_pos,  true_negative  = 0, 0
+    
+    accuracy    = property()
+    precision   = property()
+    recall      = property()
+    specificity = property()
+
+    @accuracy.getter
+    def accuracy(self):
+        return (self.true_pos + self.true_negative) / \
+            (self.false_pos + self.false_negative + self.true_pos + self.true_negative)
+
+    @precision.getter
+    def precision(self):
+        return self.true_pos / \
+            (self.true_pos + self.false_pos)
+
+    @recall.getter
+    def recall(self):
+        return self.true_pos / \
+            (self.true_pos + self.false_negative)
+
+    @specificity.getter
+    def specificity(self):
+        return self.true_negative / \
+            (self.true_negative + self.false_pos)
+
+    def update(self, test_result : bool, condition : bool) -> None:
+        if test_result is True:
+            if condition is True:
+                self.true_pos += 1
+            else:
+                self.true_negative += 1
+        else:
+            if condition is True:
+                self.false_pos += 1
+            else:
+                self.false_negative += 1
+
+    def show(self):
+        errors = DataFrame({"True" : [self.true_pos, self.true_negative], \
+                        "False" : [self.false_pos, self.false_negative]}, index=["Positive", "Negative"])
+
+        metrics = DataFrame({"Value" : [self.accuracy, self.precision, self.recall, self.specificity]}, \
+                            index=["Accuracy", "Precision", "Recall", "Specificity"])
+        print(errors)
+        print(metrics)
+
 
 class AlignInfo:
 
@@ -147,9 +198,7 @@ class IDS:
 
     def test(self, test_dataset : Dataset, ideal_seq : IdealSequence) -> None:
 
-        # Metrics
-        false_pos, false_negative = 0, 0
-        true_pos,  true_negative  = 0, 0
+        metrics = Metrics()
         
         for i in tqdm(range(0, len(test_dataset)), desc="Testing process"):
 
@@ -161,23 +210,10 @@ class IDS:
             RESULT = ideal_seq.test(self.aligner, test_dna_seq)
             LABEL  = test_dna_seq.name
 
-            # Calculate metrics
-            if RESULT is True:
-                if LABEL == "normal":
-                    false_pos +=1
-                else:
-                    false_negative +=1
+            metrics.update(RESULT, LABEL == "attack")
 
-            elif RESULT is False:
-                if LABEL == "normal":
-                    true_pos +=1
-                else:
-                    true_negative +=1
+        metrics.show()
 
-        print(f"False Pos: {false_pos}")
-        print(f"False Neg: {false_negative}")
-        print(f"True  Pos: {true_pos}")
-        print(f"True  Neg: {true_negative}")
            
 
 # Align 'seq_rec' with each sequence in 'seq_vector'
