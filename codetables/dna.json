@@ -18,8 +18,8 @@
         "8" : "ACT",
         "9" : "TGG"
     },
-
-    "dot"   : "TAC",
+    ":"     : "BTG",
+    "."     : "TAC",
     "true"  : "TAT",
     "false" : "GTA",
 

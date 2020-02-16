@@ -1,36 +1,31 @@
-import ids
 
-from kdd         import JSON_Codetable, KDD_Dataset 
-from pathlib     import Path
+import argparse
 
-def run(dataset_path: Path, codetable_path: Path, normal_path: Path):
+from src.main        import run
+from sys             import platform
+from pathlib         import Path
 
-    # Prepare dataset and codetable
-    codetable     = JSON_Codetable(codetable_path) 
-    train_dataset = KDD_Dataset(dataset_path)
+def main():
 
-    normal_act = []
+    parser = argparse.ArgumentParser(description="DNA Intrusion Detection System")
 
-    # Prepare file with normal activities (if not exist)
-    if normal_path == None or normal_path.exists() == False:
-        # Select normal activities from dataset
-        normal_act = train_dataset.get_normal_seq(codetable)
+    parser.add_argument('--train_dataset', type=Path,  required=True, help="Path to test dataset. [*.csv]",  default=None)
+    parser.add_argument('--test_dataset',  type=Path,  required=False, help="Path to train dataset. [*.csv]", default=None)     
 
-        # Put it in FASTA fromat file
-        ids.SeqIO.write(normal_act, "normal.faa", "fasta")
-    else:
-        # Obtain records from file
-        normal_act = [seq_record for seq_record in ids.SeqIO.parse(normal_path, "fasta")]
+    parser.add_argument('--codetable',  '-c',   type=Path,  required=True,
+                        help="Path to codetable. (Using for encoding dataset records in DNA sequences. [*.json])")
+    parser.add_argument('--normal',     '-n',   type=Path,  required=False, default=None, 
+                        help="Path to FASTA format file with normal activities. (Optional)[*.faa]")
 
-    assert(normal_act != [])
+    args = parser.parse_args()
 
-    # By default, a global pairwise alignment is performed
-    aligner = ids.Align.PairwiseAligner()
+    TRAIN_DS   = args.train_dataset
+    TEST_DS    = args.test_dataset
+    CODETABLE  = args.codetable
+    NORMAL_ACT = args.normal
 
-    # Match/mismatch scores of 5/-4 and gap penalties (open/extend) of 2/0.5):
-    aligner.match = 5.0
-    aligner.mismatch = -4.0
-    aligner.open_gap_score = -2.0
-    aligner.extend_gap_score = -0.5
+    # Execute the main IDS function
+    run(TRAIN_DS, TEST_DS, CODETABLE, NORMAL_ACT)
 
-    ideal_seq = ids.get_best_signature(aligner, normal_act)
+if __name__ == '__main__':
+    main()

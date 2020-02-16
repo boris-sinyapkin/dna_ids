@@ -5,23 +5,12 @@ import regex
 import json
 import csv
 
-from interfaces         import Dataset, DatasetRecord, Codetable
+from interfaces         import JSON_Codetable, Dataset, DatasetRecord
 from pathlib            import Path
 
 from Bio.Seq            import Seq
 from Bio.SeqRecord      import SeqRecord
 from sys                import stderr
-
-# Codetable loaded from *.json file. 
-class JSON_Codetable(Codetable):
-    def parse_codetable_file(self, path : Path):
-        retval = {}
-        with open(path, 'r') as json_codetable:
-            retval = json.load(json_codetable)
-        return retval
-
-    def __getitem__(self, value):
-        return self._codetable[value]
 
 class KDD_DatasetRecord(DatasetRecord):
     def create_record(self, data):
