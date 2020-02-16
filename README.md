@@ -11,15 +11,14 @@ These instructions will get you a copy of the project up and running on your loc
 ```
 git clone https://github.com/Dr-Livsey/dna_ids.git
 cd dna_ids
-./install_packages.sh
-python frontend.py -h
+python run.py -h
 ```
 
 ### TODO
-- [ ] Implement interfaces for Dataset and IDS classes
+- [+] Implement interfaces for Dataset and IDS classes
 - [ ] Implement multithreaded searching of the best signature
-- [ ] Use "Builder" pattern when implementing the main IDS algo
-- [ ] Create separate object for matrix.csv records
+- [+] Use "Builder" pattern when implementing the main IDS algo
+- [+] Create separate object for matrix.csv records
 
 ## Built With
 

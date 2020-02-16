@@ -6,6 +6,7 @@
 import json
 import csv
 import regex
+import pandas
 
 from .interfaces     import JSON_Codetable, Dataset, DatasetRecord
 from pathlib         import Path
@@ -16,6 +17,11 @@ from Bio.Seq         import Seq
 from Bio.SeqRecord   import SeqRecord
 
 class IEEE_Dataset(Dataset):
+
+    @staticmethod
+    def from_file(path : Path):
+        return IEEE_Dataset(pandas.read_csv(path))
+
     def __getitem__(self, index):
         return IEEE_DatasetRecord(self.loc[index, :].tolist())
 
@@ -25,11 +31,13 @@ class IEEE_Dataset(Dataset):
             seq        = IEEE_DatasetRecord(row.tolist())
             dna_seq    = seq.encode_into_DNA(codetable)
             dna_seq.id = id
-
             result.append(dna_seq)
 
         return numpy_array(result)
-
+    
+    def random_sample(self, size : int):
+        return IEEE_Dataset(self.sample(size))
+        
 class IEEE_DatasetRecord(DatasetRecord):
    # Encoding KDD record into DNA sequence
     def encode_into_DNA(self, codetable : JSON_Codetable):

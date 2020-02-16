@@ -121,7 +121,6 @@ class IdealSequence(SeqRecord):
             Puts ideal sequence in FASTA format in specified directory
         """
         dest_dir.mkdir()
-
         SeqIO.write(self, (dest_dir / "sequence.faa"), "fasta")
 
         with (dest_dir / Path("info.json")).open("w") as thold_file:
@@ -136,25 +135,23 @@ class IdealSequence(SeqRecord):
             src_dir/info.json    - Threshold
         """
         if path.isdir(src_dir):
-
             ideal_seqrec = SeqIO.read((src_dir / "sequence.faa"), "fasta")
 
             with (src_dir / Path("info.json")).open("r") as thold_file:
                 threshold = json.load(thold_file)["threshold"]
 
             return IdealSequence(ideal_seqrec, threshold)
-
         else:
             raise Exception(f"Directory with ideal sequence was not found: {src_dir}")
-
-            
 
 class IDS:
     _codetable  = None
     _aligner    = None
+    _ideal_seq  = None
 
-    codetable   = property()
-    aligner     = property()
+    codetable       = property()
+    aligner         = property()
+    ideal_sequence  = property()
 
     def __init__(self, codetable : Codetable, aligner : Align.PairwiseAlignment):
         self.codetable = codetable
@@ -173,6 +170,9 @@ class IDS:
     @aligner.getter
     def aligner(self):
         return self._aligner
+    @ideal_sequence.getter
+    def ideal_sequence(self):
+        return self._ideal_seq
 
     # This function search ideal sequence in train dataset
     def train(self, train_dataset : Dataset) -> IdealSequence:
@@ -194,9 +194,19 @@ class IDS:
                 threshold   = align_info.threshold
                 max_sum     = align_info.sum
 
-        return IdealSequence(ideal_seq, threshold)   
+        self._ideal_seq = IdealSequence(ideal_seq, threshold)
+        return self._ideal_seq
 
-    def test(self, test_dataset : Dataset, ideal_seq : IdealSequence) -> None:
+    def classify(self, test_dna_seq : SeqRecord) -> bool:
+        """
+            Align DNA sequence with ideal and do prediction
+        """
+        return self.ideal_sequence.test(self.aligner, test_dna_seq)
+
+    def test(self, test_dataset : Dataset) -> Metrics:
+        
+        if self.ideal_sequence is None:
+            raise Exception("Ideal sequence is None")
 
         metrics = Metrics()
         
@@ -207,12 +217,38 @@ class IDS:
             # Encode it in DNA
             test_dna_seq = ds_rec.encode_into_DNA(self.codetable)
             # Test it with IdealSequence
-            RESULT = ideal_seq.test(self.aligner, test_dna_seq)
+            RESULT = self.classify(test_dna_seq)
             LABEL  = test_dna_seq.name
 
             metrics.update(RESULT, LABEL == "attack")
 
-        metrics.show()
+        return metrics
+
+    def analyze(self, train_ds : Dataset, test_ds : Dataset, sizes=[10, 8, 6, 4, 2, 1]):
+        """
+            Test IDS metrics on different sample size of train dataset.
+            @sizes - the size of parts of test dataset is using.
+
+            For example:
+                sizes=[10, 5] means that (test_ds_size/10) and (test_ds_size/5) will be taken. 
+        """
+        TRAIN_DS_SIZE = len(train_ds)
+        METRICS_DICT  = {}     
+        for s in sizes:
+            SAMPLE_SIZE = int(TRAIN_DS_SIZE / s)
+            # Get sample of train dataset
+            current_train_ds = train_ds.random_sample(SAMPLE_SIZE)
+            # Obtain ideal sequence
+            self.train(current_train_ds)
+            # Get metrics
+            metrics = self.test(test_ds) 
+
+            METRICS_DICT.update({
+                "size"    : s,
+                "metrics" : metrics
+            })
+        
+        return METRICS_DICT
 
            
 

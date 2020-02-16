@@ -7,9 +7,9 @@ from pathlib               import Path
 
 def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path, normal_act_path: Path):
 
-    CODETABLE = JSON_Codetable(codetable_path) if codetable_path   else None
-    TRAIN_DS  = IEEE_Dataset(train_ds_path)    if train_ds_path    else None
-    TEST_DS   = IEEE_Dataset(test_ds_path)     if test_ds_path     else None
+    CODETABLE = JSON_Codetable(codetable_path)           if codetable_path   else None
+    TRAIN_DS  = IEEE_Dataset.from_file(train_ds_path)    if train_ds_path    else None
+    TEST_DS   = IEEE_Dataset.from_file(test_ds_path)     if test_ds_path     else None
 
     # By default, a global pairwise alignment is performed
     ALIGNER = Align.PairwiseAligner()
@@ -23,11 +23,13 @@ def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path, normal_
     # Create IDS instance with Codetable & Aligner
     ids = IDS(CODETABLE, ALIGNER)
 
+
+    ids.analyze(TRAIN_DS, TEST_DS)
     # Get Ideal Sequence
     # ideal_sequence = ids.train(TRAIN_DS)
     # ideal_sequence.dump(Path("ideal1"))
 
-    ideal_sequence = IdealSequence.load(Path("ideal1"))
+    # ideal_sequence = IdealSequence.load(Path("ideal1"))
 
     # Get IDS metrics
-    ids.test(TEST_DS, ideal_sequence)
+    # ids.test(TEST_DS, ideal_sequence)

@@ -85,9 +85,20 @@ class Dataset(ABC, DataFrame):
         This is the interface of 'Dataset'. 
         Derive this class and reimplement some of methods to create your own dataset. 
     """
-    def __init__(self, dataset_path : Path):
-        print("Loading the dataset from : %s" % (dataset_path))
-        super().__init__(self.parse_dataset_file(dataset_path))
+    def __init__(self, df : DataFrame):
+        super().__init__(df)
+
+    @staticmethod
+    def from_file(path : Path):
+        """
+            This method should load raw dataset records from file, 
+            parse and store there into the Dataset instance.
+
+            Note: Basically, use this steps:
+                df = pandas.read_csv(path)
+                return Dataset(pandas.read_csv(path))
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def __getitem__(self, index) -> DatasetRecord:
@@ -96,16 +107,19 @@ class Dataset(ABC, DataFrame):
         """
         raise NotImplementedError
 
-    def parse_dataset_file(self, path : Path) -> DataFrame:
-        """
-            This method should load raw dataset records from file, 
-            parse and store there into the pandas DataFrame instance.
-        """           
-        return pandas.read_csv(path)
-
     @abstractmethod
     def as_DNA_records(self, codetable : JSON_Codetable) -> numpy_array:
         """
             This method should return list of encoded activities.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def random_sample(self, size : int):
+        """
+            This method should return random sample of DatasetRecords
+
+            Note: Basically, DataFrame.sample(...) method is used and result
+                  is wrapped into Dataset class
         """
         raise NotImplementedError
