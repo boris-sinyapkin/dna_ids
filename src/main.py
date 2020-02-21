@@ -20,17 +20,7 @@ def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path, normal_
     ALIGNER.open_gap_score   = -2.0
     ALIGNER.extend_gap_score = -0.5
 
-
     # Create IDS instance with Codetable & Aligner
     ids = IDS(CODETABLE, ALIGNER)
     
     ids.analyze(TRAIN_DS, TEST_DS, sizes=[100, 90, 80, 70]).to_csv("metrics.csv")
-
-    # Get Ideal Sequence
-    # ideal_sequence = ids.train(TRAIN_DS)
-    # ideal_sequence.dump(Path("ideal1"))
-
-    # ideal_sequence = IdealSequence.load(Path("ideal1"))
-
-    # Get IDS metrics
-    # ids.test(TEST_DS, ideal_sequence)
