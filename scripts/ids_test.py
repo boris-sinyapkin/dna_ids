@@ -45,6 +45,8 @@ from src.ids                    import Metrics, IDS
 
 def run_test(TEST_DIR : Path) -> Metrics:
 
+    print(f"Test directory: {TEST_DIR}")
+
     TEST_DS    = CSV_Dataset.from_file(TEST_DIR / TEST_DS_NAME)
     TRAIN_DS   = CSV_Dataset.from_file(TEST_DIR / TRAIN_DS_NAME) 
     JSON_CODES = JSON_Codetable(CODETABLE)
@@ -61,7 +63,6 @@ def run_test(TEST_DIR : Path) -> Metrics:
     # Create IDS instance with Codetable & Aligner and calculate testing & training metrics
     return IDS(JSON_CODES, ALIGNER).analyze(TRAIN_DS, TEST_DS, sizes=TRAIN_SIZES)
     
-
 #-----------------
 # Entry point
 #-----------------
