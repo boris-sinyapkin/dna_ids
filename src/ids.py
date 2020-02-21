@@ -122,7 +122,7 @@ class IdealSequence(SeqRecord):
     # True - attack, False - normal activity
     def test(self, aligner : Align.PairwiseAlignment, other_seqrec : SeqRecord) -> bool:
         return True \
-                if aligner.score(other_seqrec.seq, self.seq) <= self._threshold \
+                if aligner.score(other_seqrec.seq, self.seq) < self._threshold \
                     else False
 
     def dump(self, dest_dir : Path):

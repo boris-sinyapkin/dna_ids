@@ -22,20 +22,18 @@ from Bio     import Align
 #------------------
 parser = argparse.ArgumentParser(description="This script is using to train & test this IDS on different datasets.")
 parser.add_argument("--dir",     "-d", type=Path, required=True)
-parser.add_argument("--output" , "-o", type=Path, required=True) 
 args = parser.parse_args()
 
 DIR         = args.dir
-OUTPUT      = args.output
 SCRIPT_DIR  = Path(path.dirname(path.abspath(__file__)))
 
 # Hardcoded dataset filenames
-TEST_DS_NAME  = Path("test.csv")
-TRAIN_DS_NAME = Path("train.csv")
-CODETABLE     = Path("codetable.json")
+TEST_DS_NAME  = "test.csv"
+TRAIN_DS_NAME = "train.csv"
+CODETABLE     = "codetable.json"
 
 # For this fractions of train dataset sizes metrics will be obtained
-TRAIN_SIZES = [100, 90, 80, 70]
+TRAIN_SIZES = [100, 80, 60, 40, 20, 10]
 
 # Import IDS modules
 syspath.append(path.join(SCRIPT_DIR, ".."))
@@ -49,7 +47,7 @@ def run_test(TEST_DIR : Path) -> Metrics:
 
     TEST_DS    = CSV_Dataset.from_file(TEST_DIR / TEST_DS_NAME)
     TRAIN_DS   = CSV_Dataset.from_file(TEST_DIR / TRAIN_DS_NAME) 
-    JSON_CODES = JSON_Codetable(CODETABLE)
+    JSON_CODES = JSON_Codetable(TEST_DIR / CODETABLE)
     
     # By default, a global pairwise alignment is performed
     ALIGNER = Align.PairwiseAligner()
@@ -67,9 +65,7 @@ def run_test(TEST_DIR : Path) -> Metrics:
 # Entry point
 #-----------------
 def main():
-
     TEST_DIRS = []
-    
     # Find of test directories
     for dirpath, dirnames, filenames in walk(DIR):
         if not dirnames:
