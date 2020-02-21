@@ -15,12 +15,11 @@ python run.py -h
 ```
 
 ### TODO
-- [+] Implement interfaces for Dataset and IDS classes
-- [ ] Implement multithreaded searching of the best signature
-- [+] Use "Builder" pattern when implementing the main IDS algo
-- [+] Create separate object for matrix.csv records
+- [x] Implement interfaces for Dataset and IDS classes
+- [x] Implement multithreaded searching of the best signature
+- [x] Use "Builder" pattern when implementing the main IDS algo
+- [ ] Enhance traffic encoding method
 
 ## Built With
 
 * [Biopython](http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc32) - Main python module to work with DNA sequences
-* [NSL-KDD](https://www.unb.ca/cic/datasets/nsl.html)
