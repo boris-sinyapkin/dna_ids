@@ -284,10 +284,8 @@ class IDS:
                 wrapped_data is a tuple: ( Align.PairwiseAligner, Bio.Seq, tuple, Codetable )
                 return value is sum of all alignment scores.
             """   
-            (start, finish) = wrapped_data
+            (start, finish), aligner_clone = wrapped_data, self.aligner
             
-            aligner_clone = self.aligner
-                    
             score_sum = 0
             for dna_record in dna_sequences[start : finish + 1]:
                 score_sum += aligner_clone.score(dna_record.seq, seq)
