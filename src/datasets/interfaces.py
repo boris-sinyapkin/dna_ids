@@ -6,7 +6,30 @@ from numpy         import array as numpy_array
 from pandas        import DataFrame
 from pathlib       import Path
 from abc           import ABC, abstractmethod
+
 from Bio.SeqRecord import SeqRecord
+from Bio.Seq       import Seq
+from Bio           import Align
+
+class AlignInfo:
+    _info = {}
+
+    sum       = property()
+    seqrec    = property()
+    threshold = property()
+
+    def __init__(self, align_info : dict):
+        self._info = align_info
+
+    @sum.getter
+    def sum(self):
+        return self._info["sum"]
+    @seqrec.getter
+    def seqrec(self):
+        return self._info["seq"]
+    @threshold.getter
+    def threshold(self):
+        return self._info["threshold"]
 
 class Codetable(ABC):
     """
@@ -79,12 +102,15 @@ class DatasetRecord:
             DNA sequence using concrete codetable.
         """
         raise NotImplementedError
-
+    
 class Dataset(ABC, DataFrame):
     """
         This is the interface of 'Dataset'. 
         Derive this class and reimplement some of methods to create your own dataset. 
     """
+    width  = property()
+    height = property()
+    
     def __init__(self, df : DataFrame):
         super().__init__(df)
 
@@ -99,7 +125,15 @@ class Dataset(ABC, DataFrame):
                 return Dataset(pandas.read_csv(path))
         """
         raise NotImplementedError
-
+    
+    @width.getter
+    def width(self):
+        return self.shape[1]
+    
+    @height.getter
+    def height(self):
+        return self.shape[0]
+        
     @abstractmethod
     def __getitem__(self, index) -> DatasetRecord:
         """

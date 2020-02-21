@@ -2,3 +2,4 @@ biopython
 regex
 tqdm
 pandas
+pyshark
