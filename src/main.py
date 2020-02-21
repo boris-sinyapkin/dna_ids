@@ -5,7 +5,7 @@ from .datasets.interfaces  import JSON_Codetable
 from .ids                  import IDS, Align, IdealSequence
 from pathlib               import Path
 
-def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path, normal_act_path: Path):
+def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path):
 
     CODETABLE = JSON_Codetable(codetable_path)          if codetable_path   else None
     TRAIN_DS  = CSV_Dataset.from_file(train_ds_path)    if train_ds_path    else None
@@ -23,4 +23,4 @@ def run( train_ds_path: Path, test_ds_path: Path, codetable_path : Path, normal_
     # Create IDS instance with Codetable & Aligner
     ids = IDS(CODETABLE, ALIGNER)
     
-    ids.analyze(TRAIN_DS, TEST_DS, sizes=[100, 90, 80, 70]).to_csv("metrics.csv")
+    ids.analyze(TRAIN_DS, TEST_DS, sizes=[100, 90, 80, 70]).to_csv("metrics.csv", index=False)
