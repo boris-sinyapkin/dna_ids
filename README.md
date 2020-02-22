@@ -18,8 +18,8 @@ python run.py -h
 ## Examples
 
 ### Run
-Let be you dataset located in Datasets/IoT/IEEE folder. So, running options of this IDS suit will be the next:
-```python
+Let you dataset located in Datasets/IoT/IEEE folder. So, running options of this IDS suit will be the next:
+```
 py -3 run.py \
 --train_dataset Datasets/IoT/IEEE/train.csv \
 --codetable     iot_dna.json
@@ -39,7 +39,7 @@ So, we have 2 folders. For example:
 - **Datasets/IoT/mirai-httpflooding-1**
 
 To run IDS test suit for above folder structure, use:
-```python
+```
 py -3 scripts/ids_test.py --dir Datasets
 ```
 This run will produce metrics.csv file with IDS characteristics which will be located in each above folder.
