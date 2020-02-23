@@ -184,8 +184,23 @@ class IDS:
     def ideal_sequence(self):
         return self._ideal_seq
 
+    def get_multiple_align_score(self, seq : Seq, dna_sequences : numpy_array, tasks : list, pool : ThreadPool) -> float:
+        """
+            Align seq with each record in dna_sequences list and return sum of alignment scores.
+                @dna_sequences - list of encoded DNA sequences
+                @tasks - list of (start_index, finish_index) tuples for each thread in @pool
+        """                
+        def _calc_multiple_alignment_score(wrapped_data : tuple) -> int:
+            """return value is a sum of all alignment scores in input rangerange."""   
+            (start, finish) = wrapped_data       
+            score_sum = 0.
+            for dna_record in dna_sequences[start : finish + 1]:
+                score_sum += self.aligner.score(dna_record.seq, seq)
+            return score_sum
+        return sum(s for s in pool.map(_calc_multiple_alignment_score, tasks))
+
     # This function search ideal sequence in train dataset
-    def train(self, train_dataset : Dataset) -> IdealSequence:
+    def train(self, train_dataset : Dataset, proc_num = mp.cpu_count()) -> IdealSequence:
 
         # Ideal sequence attributes
         ideal_seq = None 
@@ -194,15 +209,18 @@ class IDS:
         max_sum = 0
         
         train_ds_dna = train_dataset.as_DNA_records(self.codetable)
-                
-        for dna_record in tqdm(train_ds_dna, desc="Training process"):
-                        
-            threshold, score_sum = self.get_multiple_align_score(dna_record.seq, train_ds_dna) 
-                        
-            if score_sum > max_sum:
-                ideal_seq   = dna_record
-                max_thold   = threshold
-                max_sum     = score_sum
+        
+        # Prepare environment for parallel execution
+        SIZE, THREADS = len(train_ds_dna), proc_num
+        TASKS = [ (start, finish) for start, finish in self._intervals(THREADS, SIZE) ]
+
+        with ThreadPool(THREADS) as pool:
+            for dna_record in tqdm(train_ds_dna, desc="Training process"):
+                score_sum = self.get_multiple_align_score(dna_record.seq, train_ds_dna, TASKS, pool) 
+                if score_sum > max_sum:
+                    ideal_seq   = dna_record
+                    max_thold   = score_sum / SIZE
+                    max_sum     = score_sum
 
         self._ideal_seq = IdealSequence(ideal_seq, max_thold)
         return self._ideal_seq
@@ -271,34 +289,3 @@ class IDS:
             METRICS = METRICS.append(metrics)
                     
         return METRICS
-    
-    def get_multiple_align_score(self, seq : Seq, dna_sequences : numpy_array, proc_num = mp.cpu_count()) -> tuple:
-        """
-            Align seq with each record in this dataset and 
-            return threshold.
-            @dna_sequences - list of encoded DNA sequences
-            return value is a tuple: ( threshold, sum of scores )
-        """                
-        def _calc_multiple_alignment_score(wrapped_data : tuple) -> int:
-            """
-                wrapped_data is a tuple: ( Align.PairwiseAligner, Bio.Seq, tuple, Codetable )
-                return value is sum of all alignment scores.
-            """   
-            (start, finish), aligner_clone = wrapped_data, self.aligner
-            
-            score_sum = 0
-            for dna_record in dna_sequences[start : finish + 1]:
-                score_sum += aligner_clone.score(dna_record.seq, seq)
-                
-            return score_sum
-                          
-        SIZE, PROCS = len(dna_sequences), proc_num
-        TASKS = [ (start, finish) for start, finish in self._intervals(PROCS, SIZE) ]  
-
-        max_score_sum = 0.
-        
-        # Make the Pool of workers
-        with ThreadPool(PROCS) as pool:
-            max_score_sum = sum(s for s in pool.map(_calc_multiple_alignment_score, TASKS))
-
-        return (max_score_sum / SIZE, max_score_sum)
