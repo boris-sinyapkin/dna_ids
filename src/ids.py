@@ -1,22 +1,17 @@
 
-import csv
 import json
-import regex
 import multiprocessing as mp  
+import pandas as pd
 
 from multiprocessing.dummy   import Pool as ThreadPool
 from math                    import floor
-    
-from pandas                  import DataFrame
 from numpy                   import array as numpy_array
 from tqdm                    import tqdm
 from pathlib                 import Path
 from .datasets.interfaces    import Codetable, Dataset
-
 from Bio                     import SeqIO, Align
 from Bio.Seq                 import Seq
 from Bio.SeqRecord           import SeqRecord
-
 from os                      import path
 
 class Metrics:
@@ -81,8 +76,8 @@ class Metrics:
             else:
                 self.true_negative += 1
                 
-    def as_dataframe(self, train_size, test_size) -> DataFrame:
-        return DataFrame({
+    def as_dataframe(self, train_size, test_size) -> pd.DataFrame:
+        return pd.DataFrame({
                     "True Positive"     : [self.true_pos],
                     "True Negative"     : [self.true_negative],     
                     "False Positive"    : [self.false_pos],
@@ -95,10 +90,10 @@ class Metrics:
                     "Train subset size" : [train_size]})
 
     def show(self):
-        errors = DataFrame({"True" : [self.true_pos, self.true_negative], \
+        errors = pd.DataFrame({"True" : [self.true_pos, self.true_negative], \
                         "False" : [self.false_pos, self.false_negative]}, index=["Positive", "Negative"])
 
-        metrics = DataFrame({"Value" : [self.accuracy, self.precision, self.recall, self.specificity]}, \
+        metrics = pd.DataFrame({"Value" : [self.accuracy, self.precision, self.recall, self.specificity]}, \
                             index=["Accuracy", "Precision", "Recall", "Specificity"])
         print(errors)
         print(metrics)
@@ -122,7 +117,7 @@ class IdealSequence(SeqRecord):
     # True - attack, False - normal activity
     def test(self, aligner : Align.PairwiseAlignment, other_seqrec : SeqRecord) -> bool:
         return True \
-                if aligner.score(other_seqrec.seq, self.seq) < self._threshold \
+                if aligner.score(self.seq, other_seqrec.seq) < self._threshold \
                     else False
 
     def dump(self, dest_dir : Path):
@@ -154,7 +149,23 @@ class IdealSequence(SeqRecord):
             raise Exception(f"Directory with ideal sequence was not found: {src_dir}")
 
 class IDS:
-        
+    class Aligner(Align.PairwiseAligner):
+        def __init__(self, algo='Smith-Waterman') -> None:
+            super().__init__()
+            if algo == 'Smith-Waterman':
+                self.match            = 1.0
+                self.mismatch         = 0
+                self.open_gap_score   = 0
+                self.extend_gap_score = 0
+                self.mode             = 'local'
+            elif algo == 'Gotoh':
+                self.match            =  5.0
+                self.mismatch         = -4.0
+                self.open_gap_score   = -2.0
+                self.extend_gap_score = -0.5
+                self.mode             = 'global'
+            print(f"Alignment algo: {self.algorithm}")
+    
     _codetable  = None
     _aligner    = None
     _ideal_seq  = None
@@ -194,20 +205,17 @@ class IDS:
             """return value is a sum of all alignment scores in input rangerange."""   
             (start, finish) = wrapped_data       
             score_sum = 0.
-            for dna_record in dna_sequences[start : finish + 1]:
-                score_sum += self.aligner.score(dna_record.seq, seq)
+            for dna_record in tqdm(dna_sequences[start : finish + 1], total=(finish + 1 - start), desc="Training process"):
+                score_sum += self.aligner.score(seq, dna_record.seq)
             return score_sum
         return sum(s for s in pool.map(_calc_multiple_alignment_score, tasks))
 
     # This function search ideal sequence in train dataset
     def train(self, train_dataset : Dataset, proc_num = mp.cpu_count()) -> IdealSequence:
-
-        # Ideal sequence attributes
-        ideal_seq = None 
-        max_thold = None
-
-        max_sum = 0
         
+        mean_row = train_dataset.get_median()
+                
+        mean_row_dna = mean_row.encode_into_DNA(self.codetable, id='')
         train_ds_dna = train_dataset.as_DNA_records(self.codetable)
         
         # Prepare environment for parallel execution
@@ -215,14 +223,9 @@ class IDS:
         TASKS = [ (start, finish) for start, finish in self._intervals(THREADS, SIZE) ]
 
         with ThreadPool(THREADS) as pool:
-            for dna_record in tqdm(train_ds_dna, desc="Training process"):
-                score_sum = self.get_multiple_align_score(dna_record.seq, train_ds_dna, TASKS, pool) 
-                if score_sum > max_sum:
-                    ideal_seq   = dna_record
-                    max_thold   = score_sum / SIZE
-                    max_sum     = score_sum
+            score_sum = self.get_multiple_align_score(mean_row_dna.seq, train_ds_dna, TASKS, pool) 
 
-        self._ideal_seq = IdealSequence(ideal_seq, max_thold)
+        self._ideal_seq = IdealSequence(mean_row_dna, score_sum / SIZE)
         return self._ideal_seq
 
     def classify(self, test_dna_seq : SeqRecord) -> bool:
@@ -244,9 +247,9 @@ class IDS:
             (start, finish), metrics = wrapped_data, Metrics()
             for i in tqdm(range(start, finish), desc="Testing process"):  
                 # Obtain DatasetRecord instance
-                ds_rec = test_dataset[i]
+                ds_rec = test_dataset.raw_index(i)
                 # Encode it in DNA
-                test_dna_seq = ds_rec.encode_into_DNA(self.codetable)            
+                test_dna_seq = ds_rec.encode_into_DNA(self.codetable, id=str(i))            
                 # Test it with IdealSequence
                 metrics.update(self.classify(test_dna_seq), test_dna_seq.name == "attack")
                 
@@ -263,7 +266,7 @@ class IDS:
 
         return METRICS
 
-    def analyze(self, train_ds : Dataset, test_ds : Dataset, sizes=[10, 8, 6, 4, 2, 1]) -> DataFrame:
+    def analyze(self, train_ds : Dataset, test_ds : Dataset, sizes=[10, 8, 6, 4, 2, 1]) -> pd.DataFrame:
         """
             Test IDS metrics on different sample size of train dataset.
             @sizes - the size of parts of test dataset is using.
@@ -272,20 +275,21 @@ class IDS:
                 sizes=[10, 5] means that (test_ds_size/10) and (test_ds_size/5) will be taken. 
         """
         TRAIN_DS_SIZE = len(train_ds)
-        METRICS       = DataFrame(None)    
+        METRICS       = pd.DataFrame(None)    
 
         # Test IDS instance
         ids = IDS(self.codetable, self.aligner)
 
         for s in sizes:
             SAMPLE_SIZE = int(TRAIN_DS_SIZE / s)
+            print(f"Train Dataset size : {SAMPLE_SIZE}")  
             # Get sample of train dataset
             current_train_ds = train_ds.random_sample(SAMPLE_SIZE)            
             # Obtain ideal sequence
             ids.train(current_train_ds)
             # Get metrics
             metrics = ids.test(test_ds).as_dataframe(SAMPLE_SIZE, len(test_ds))
-
+            
             METRICS = METRICS.append(metrics)
                     
         return METRICS
