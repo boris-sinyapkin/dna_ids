@@ -2,7 +2,6 @@
 import argparse
 
 from src.main        import run
-from sys             import platform
 from pathlib         import Path
 
 def main():

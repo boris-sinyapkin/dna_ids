@@ -1,5 +1,6 @@
 biopython
-regex
 tqdm
 pandas
-pyshark
+numpy
+sklearn
+openpyxl

@@ -48,9 +48,14 @@ This run will produce metrics.csv file with IDS characteristics which will be lo
 - [x] Implement interfaces for Dataset and IDS classes
 - [x] Implement multithreaded searching of the best signature
 - [x] Use "Builder" pattern when implementing the main IDS algo
-- [ ] Enhance traffic encoding method
-- [ ] Parse input traffic and learn the IDS "on the fly"
+- [ ] To implement Smith-Waterman local alignment
+- [ ] Smith-Waterman & Needleman–Wunsch comparasion
+- [ ] Add ROC-curve metric
 
+### Datasets
+- [IEEEDataPort IoT Network Intrusion Dataset](https://ieee-dataport.org/open-access/iot-network-intrusion-dataset)
+- [Stratosphere Lab Malware on IoT Dataset](https://www.stratosphereips.org/datasets-iot23)
+- [NSW Canberra The BoT-IoT Dataset](https://www.unsw.adfa.edu.au/unsw-canberra-cyber/cybersecurity/ADFA-NB15-Datasets/bot_iot.php)
 
 ## Built With
 
