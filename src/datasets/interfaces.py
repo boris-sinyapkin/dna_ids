@@ -76,18 +76,29 @@ class DatasetRecord:
         Reimplement concrete methods to create your own logic of this class.
     """
     _record = None
+    _label  = None
     record  = property()
+    label   = property()
 
     def __init__(self, data):
-        self.record = data
+        self.record = data[:-1]
+        self.label  = data[-1]
 
     @record.setter
     def record(self, data):
         self._record = self.create_record(data)
+        
+    @label.setter
+    def label(self, data):
+        self._label = data
 
     @record.getter
     def record(self):
         return self._record
+    
+    @label.getter
+    def label(self):
+        return self._label
 
     def create_record(self, data):
         """
@@ -135,7 +146,7 @@ class Dataset(ABC, DataFrame):
         return self.shape[0]
         
     @abstractmethod
-    def __getitem__(self, index) -> DatasetRecord:
+    def raw_index(self, index) -> DatasetRecord:
         """
             Basically, should return DatasetRecord instance
         """
@@ -155,5 +166,13 @@ class Dataset(ABC, DataFrame):
 
             Note: Basically, DataFrame.sample(...) method is used and result
                   is wrapped into Dataset class
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def get_median(self) -> DatasetRecord:
+        """
+            This method should return a DatasetRecord instance. 
+            Each element in vector (except "label") should be a median.
         """
         raise NotImplementedError
