@@ -18,29 +18,30 @@ python run.py -h
 ## Examples
 
 ### Run
-Let you dataset located in Datasets/IoT/IEEE folder. So, running options of this IDS suit will be the next:
+Let you dataset located in *datasets/CSV/IEEE-IoT/dos-syn-flooding-1* folder. So, running options of this IDS suit will be the next:
 ```
 py -3 run.py \
---train_dataset Datasets/IoT/IEEE/train.csv \
---codetable     iot_dna.json
+--train_dataset datasets/CSV/IEEE-IoT/dos-syn-flooding-1/train.csv \
+--test_dataset  datasets/CSV/IEEE-IoT/dos-syn-flooding-1/test.csv \
+--codetable     datasets/CSV/IEEE-IoT/dos-syn-flooding-1/codetable.json
 ```
 
 If you want to do test analysis of the IDS use the "--test_dataset" option.
 
 ### Obtain machine learning metrics of IDS
 To test this IDS prepare you datasets folders in the following way. 
-For example, let we have 2 datasets to test. Firstly, put it on different folders, which must contain 3 files:
+For example, let we have 2 datasets to test. Firstly, put them into different folders, each of which should be contains 3 files:
 - **train.csv** - Train subset
 - **test.csv** - Test subset
-- **codetable.json** - Will be use in process of encoding traffic into DNA sequences.
+- **codetable.json** - Will be used in process of encoding traffic into DNA sequences.
 
 So, we have 2 folders. For example:
-- **Datasets/IEEE/dos_synflooding-1**
-- **Datasets/IoT/mirai-httpflooding-1**
+- **datasets/CSV/IEEE-IoT/dos-syn-flooding-1**
+- **datasets/CSV/IoT/mirai-httpflooding-1**
 
 To run IDS test suit for above folder structure, use:
 ```
-py -3 scripts/ids_test.py --dir Datasets
+py -3 scripts/ids_test.py --dir datasets
 ```
 This run will produce metrics.csv file with IDS characteristics which will be located in each above folder.
 
